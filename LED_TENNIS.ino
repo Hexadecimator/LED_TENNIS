@@ -9,7 +9,7 @@ keep all the code we've already written valid, we'll
 use the "count" variable to index this array myPins[]
 which will control the output LEDs now
 *******************************************************/
-int myPins[] = {2, 3, 4, 5, 6, 7, 8, 9};
+int myPins[] = {8, 9, 2, 3, 4, 5, 6, 7};
 
 const int BTN_L = 10;
 const int BTN_R = 11;
