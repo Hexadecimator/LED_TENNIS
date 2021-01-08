@@ -1,22 +1,19 @@
-
-
-
-
-
 //CONSTANTS
-const int LED_0 = 0;
-const int LED_1 = 1;
-const int LED_2 = 2;
-const int LED_3 = 3;
-const int LED_4 = 4;
-const int LED_5 = 5;
-const int LED_6 = 6;
-const int LED_7 = 7;
+
+/*******************************************************
+Lesson learned: using TX and RX digital IO pins 0 and 1
+is a VERY bad idea (if you want to break the ATMEGA chip
+off the protoboard into its own board). We're going to 
+shift the LED output Pins from 0-7 to 2-9. In order to
+keep all the code we've already written valid, we'll
+use the "count" variable to index this array myPins[]
+which will control the output LEDs now
+*******************************************************/
+int myPins[] = {2, 3, 4, 5, 6, 7, 8, 9};
 
 const int BTN_L = 10;
 const int BTN_R = 11;
 
-// may not need both of these timing variables
 
 const unsigned long interval = 50;
 
@@ -45,22 +42,26 @@ unsigned long debounceDelay = 25;
 
 void setup() 
 {
-  // put your setup code here, to run once:
-  pinMode(LED_0, OUTPUT);
-  pinMode(LED_1, OUTPUT);
-  pinMode(LED_2, OUTPUT);
-  pinMode(LED_3, OUTPUT);
-  pinMode(LED_4, OUTPUT);
-  pinMode(LED_5, OUTPUT);
-  pinMode(LED_6, OUTPUT);
-  pinMode(LED_7, OUTPUT);
-
+  // set output LEDs to OUTPUT
+  for(int i = 0; i <= 7; i++)
+  {
+    pinMode(myPins[i], OUTPUT);
+  }
+  
+  // set player "paddles" (buttons) to INPUT
   pinMode(BTN_L, INPUT);
   pinMode(BTN_R, INPUT);
-  digitalWrite(BTN_L, HIGH); //enable pullup resistor
-  digitalWrite(BTN_R, HIGH); //enable pullup resistor
 
-  digitalWrite(LED_0, HIGH);
+  // this is a test because WHY DO THE TX AND RX PINS BEHAVE THIS WAY WHYYYYYYYY
+  pinMode(0, INPUT_PULLUP);
+  pinMode(1, INPUT_PULLUP);
+  
+  //enable pullup resistors
+  digitalWrite(BTN_L, HIGH); 
+  digitalWrite(BTN_R, HIGH); 
+ 
+  // start the LED "bouncing" animation by turning on the first LED in the sequence
+  digitalWrite(myPins[0], HIGH);
   
   count = 0;
 
@@ -97,18 +98,25 @@ void loop()
   
   currentMillis = millis();
   
-  if ((currentMillis - previousMillis >= interval) && !gameOver) // check if 250ms has passed or the game has ended
+  if ((currentMillis - previousMillis >= interval) && !gameOver) // check if "interval" ms has passed or the game has ended
   {
     previousMillis = currentMillis;
 
     if (nextLED == false)
     {
-      digitalWrite(count, HIGH);
+      if (count >=0 && count <= 7) //make sure we don't out-of-bounds myPins[]
+      {
+        digitalWrite(myPins[count], HIGH);
+      }
       nextLED = true;
     } 
     else if (nextLED == true)
     {  
-      digitalWrite(count, LOW);
+      if (count >=0 && count <= 7) //make sure we don't out-of-bounds myPins[]
+      { 
+        digitalWrite(myPins[count], LOW);
+      }
+      
       if (goingRight == true)
       {   
         if (count >= 7 && count < 8)
@@ -132,8 +140,7 @@ void loop()
           gameOver = true;
         }
         count--;
-      }
-      
+      }     
       nextLED = false;
     } 
   }
@@ -142,25 +149,21 @@ void loop()
   {
     canVolleyLeft = false;
     canVolleyRight = false;
-    goingRight = true;
+    goingRight = true; //left button successfully pressed, reverse order of LEDs
   } else if ((canVolleyRight == true) && (r_btn_pressed == true))
   {
     canVolleyLeft = false;
     canVolleyRight = false;
-    goingRight = false;
+    goingRight = false; //right button successfully pressed, reverse order of LEDs
   }
 
   if (gameOver == true)
   {
-    //to indicate game over flash all the LEDs on/off every half second forever
-    digitalWrite(LED_0, LED_STATE);
-    digitalWrite(LED_1, LED_STATE);
-    digitalWrite(LED_2, LED_STATE);
-    digitalWrite(LED_3, LED_STATE);
-    digitalWrite(LED_4, LED_STATE);
-    digitalWrite(LED_5, LED_STATE);
-    digitalWrite(LED_6, LED_STATE);
-    digitalWrite(LED_7, LED_STATE);
+    //to indicate game over flash all the LEDs on/off every 750ms forever (until reset button is pressed)
+    for(int i = 0; i <= 7; i++)
+    {
+      digitalWrite(myPins[i], LED_STATE);
+    }
 
     if(LED_STATE == LOW)
     {
@@ -169,7 +172,6 @@ void loop()
     {
       LED_STATE = LOW;
     }
-
     delay(750);
   }
   l_btn_prev_state = l_btn_state;
